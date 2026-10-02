@@ -1,0 +1,23 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Frontend
+/ui/node_modules/
+/ui/dist/
+
+# Models are downloaded at runtime / by vt-bench, never committed
+/models/
+*.onnx
+*.gguf
+ggml-*.bin
+
+# Personal benchmark audio stays local (manifests + reference text are committed)
+/bench/golden/**/*.wav
+/bench/golden/**/*.flac
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
