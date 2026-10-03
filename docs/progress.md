@@ -8,10 +8,10 @@ _Last updated: 2026-10-03_
 
 ## Current status
 
-**Phase P1 (engine spike & benchmark): code built, awaiting real numbers.** `vt-bench` and its
+**Phase P1 (engine spike & benchmark): runner baseline in, awaiting the founder's laptop run.** `vt-bench` and its
 crates are in place and unit-tested on Linux. Remaining:
 1. ~~Pin model hashes~~ (done).
-2. Get a green Windows CI run, which produces `vt-bench-windows-x64`.
+2. ~~Get a green Windows CI run~~ (done). `vt-bench-windows-x64` from the CI run on `612c5a7` or later.
 3. The founder runs it on their laptop (`bench/README.md`).
 4. Log the engine decision below.
 
@@ -50,9 +50,17 @@ crates are in place and unit-tested on Linux. Remaining:
 - [x] `vt-platform`: peak RSS (Windows `GetProcessMemoryInfo` / Linux `VmHWM`)
 - [x] `vt-bench`: `models`, `fetch`, `import`, `verify`, `transcribe`, `golden fetch-libri`, `record`, `mic-latency`, `run` (fresh process per engine; WER, P&C WER, RTF p50/p95, est. 10 s wait, load time, peak RAM; markdown + JSON report; recommendation by rule)
 - [x] Golden set definitions: 40 tagged prompts (`bench/golden/prompts.toml`), deterministic 20-clip LibriSpeech selection (`bench/golden/libri.toml`)
-- [ ] First green `bench.yml` run: all 4 engines transcribe LibriSpeech with WER < 15% on the Windows runner; runner report committed to `bench/results/`
+- [x] First full `bench.yml` run (2026-10-03, `612c5a7`): all 4 engines transcribe LibriSpeech correctly on the Windows runner (2 physical cores). Report: `bench/results/2026-10-03-github-windows-latest.md`
+  - Parakeet: WER 1.0%, RTF p95 0.13 (est. 1.34 s wait for 10 s, just over budget **on this 2-core runner**), 937 MB.
+  - Moonshine: WER 2.5%, RTF 0.09 (0.91 s), 447 MB.
+  - Whisper base: WER 3.3%, RTF 0.49, 277 MB.
+  - Whisper small: WER 2.5%, RTF 1.77, 516 MB.
+  - Getting there took three native-build fixes: static CRT, CMP0091, and `-O2` + `GGML_NATIVE=OFF`. See CLAUDE.md, Windows gotchas.
 - [ ] Founder: record personal set, run `mic-latency` + `run` on the laptop; report committed to `bench/results/`
 - [ ] **Decision:** default engine chosen by the rule in ROADMAP P1 and logged above. Mic-open strategy chosen from `mic-latency`
+
+Follow-ups found in P1:
+- If Whisper is chosen, size whisper.cpp's `audio_ctx` to the clip. It always encodes a fixed 30 s window, which dominates latency on short dictations (P2/P3).
 
 ## P2: Core loop MVP
 - [ ] Live capture (cpal/WASAPI → ring buffer → resample → VAD trim)

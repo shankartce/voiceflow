@@ -51,7 +51,8 @@ Override it with `--data-dir` or `MURMUR_DATA_DIR`.
 
 CI: `.github/workflows/ci.yml` (Linux lint/test/fence + Windows test, which uploads
 `vt-bench-windows-x64` as an artifact) and `bench.yml` (Windows runner: lock check, then all 4
-engines on LibriSpeech, failing if any engine's WER > 15%).
+engines on LibriSpeech. It fails if any engine's WER > 15% or RTF p95 > 3, or if the whisper-base
+build canary has RTF p95 > 1).
 
 Windows dev prerequisites: Rust stable (MSVC toolchain), Visual Studio Build Tools (C++),
 CMake, LLVM/clang (bindgen for whisper.cpp / llama.cpp), Node 20+, WebView2 (preinstalled on
@@ -173,8 +174,8 @@ Deep dives:
 - **MSVC + cmake-rs drops `/O2`.** cmake-rs overwrites `CMAKE_<LANG>_FLAGS_RELEASE` with the
   cc crate's flags minus every `-O`, so CMake-built C/C++ (whisper.cpp, later llama.cpp) compiles
   unoptimised, about 30× slower. `.cargo/config.toml` `[env]` pins
-  `CMAKE_{C,CXX}_FLAGS_RELEASE=-O2 -DNDEBUG`. `bench.yml` fails if any engine is slower than
-  real time. Cargo does **not** rebuild `-sys` crates when `[env]` changes: after editing it, run
+  `CMAKE_{C,CXX}_FLAGS_RELEASE=-O2 -DNDEBUG`. `bench.yml`'s whisper-base canary (RTF p95 ≤ 1)
+  catches a regression. Cargo does **not** rebuild `-sys` crates when `[env]` changes: after editing it, run
   `cargo clean --release -p whisper-rs-sys` (CI keys its cache on the file).
 - **Defender/SmartScreen** dislike unsigned binaries that install keyboard hooks. Release builds
   are code-signed (see ROADMAP P6). Expect a SmartScreen warning on unsigned dev builds.
