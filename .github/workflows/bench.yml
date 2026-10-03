@@ -28,7 +28,7 @@ env:
 jobs:
   bench:
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Data directory
@@ -36,6 +36,10 @@ jobs:
         run: echo "MURMUR_DATA_DIR=${RUNNER_TEMP//\\//}/murmur" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          # Cargo doesn't rebuild -sys crates when .cargo/config.toml [env] changes
+          # (native build flags live there), so key the cache on it.
+          key: cargo-config-${{ hashFiles('.cargo/config.toml') }}
       - name: Build vt-bench (release)
         shell: bash
         run: VT_GIT_SHA="${GITHUB_SHA::10}" cargo build --release -p vt-bench
@@ -74,21 +78,25 @@ jobs:
       - name: Benchmark
         shell: bash
         run: |
-          target/release/vt-bench run --set libri --runs "${{ inputs.runs || '3' }}" \
+          target/release/vt-bench run --set libri --runs "${{ inputs.runs || '3' }}" --threads 4 \
             --out bench-results --label github-windows-latest
           cat bench-results/*.md >> "$GITHUB_STEP_SUMMARY"
-      - name: Sanity check (every engine transcribes LibriSpeech correctly)
+      - name: Sanity check (every engine transcribes LibriSpeech correctly, faster than real time)
         shell: pwsh
         run: |
           $report = Get-Content (Get-ChildItem bench-results -Filter *.json | Select-Object -First 1).FullName | ConvertFrom-Json
           $bad = @()
+          $slow = @()
           foreach ($e in $report.summaries) {
-            $wer = ($e.sets | Where-Object { $_.set -eq 'libri' }).wer
-            Write-Host ("{0}: WER {1:N1}%" -f $e.engine, $wer)
-            if ($wer -gt 15) { $bad += $e.engine }
+            $libri = $e.sets | Where-Object { $_.set -eq 'libri' }
+            Write-Host ("{0}: WER {1:N1}%, RTF p95 {2:N3}" -f $e.engine, $libri.wer, $libri.rtf_p95)
+            if ($libri.wer -gt 15) { $bad += $e.engine }
+            # Slower than real time = broken build (e.g. unoptimised native code).
+            if ($libri.rtf_p95 -gt 1.0) { $slow += $e.engine }
           }
           if ($report.summaries.Count -lt 4) { throw "expected 4 engines, got $($report.summaries.Count)" }
           if ($bad.Count -gt 0) { throw "WER above 15% (broken integration?): $($bad -join ', ')" }
+          if ($slow.Count -gt 0) { throw "RTF p95 above 1.0 (unoptimised build?): $($slow -join ', ')" }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

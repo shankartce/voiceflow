@@ -170,6 +170,12 @@ Deep dives:
   sets `+crt-static` for MSVC. Any new C/C++ dependency must build with `/MT` too (cmake-rs and
   cc honour the flag; a CMake project that sets `CMAKE_MSVC_RUNTIME_LIBRARY` itself may not).
   Otherwise linking fails with `LNK2038 RuntimeLibrary mismatch`.
+- **MSVC + cmake-rs drops `/O2`.** cmake-rs overwrites `CMAKE_<LANG>_FLAGS_RELEASE` with the
+  cc crate's flags minus every `-O`, so CMake-built C/C++ (whisper.cpp, later llama.cpp) compiles
+  unoptimised, about 30× slower. `.cargo/config.toml` `[env]` pins
+  `CMAKE_{C,CXX}_FLAGS_RELEASE=-O2 -DNDEBUG`. `bench.yml` fails if any engine is slower than
+  real time. Cargo does **not** rebuild `-sys` crates when `[env]` changes: after editing it, run
+  `cargo clean --release -p whisper-rs-sys` (CI keys its cache on the file).
 - **Defender/SmartScreen** dislike unsigned binaries that install keyboard hooks. Release builds
   are code-signed (see ROADMAP P6). Expect a SmartScreen warning on unsigned dev builds.
 

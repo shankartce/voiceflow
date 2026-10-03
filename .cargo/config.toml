@@ -20,3 +20,18 @@ rustflags = ["-C", "target-feature=+crt-static"]
 [env]
 CMAKE_POLICY_DEFAULT_CMP0091 = "NEW"
 CMAKE_MSVC_RUNTIME_LIBRARY = "MultiThreaded"
+
+# ...and keep optimisation on. With MSVC, cmake-rs *replaces*
+# CMAKE_<LANG>_FLAGS_RELEASE with the cc crate's flags but strips every -O flag
+# ("let cmake deal with optimization"), which removes CMake's /O2: whisper.cpp
+# then builds at /Od and runs ~30x slower than real time. Defining the variable
+# ourselves (whisper-rs-sys forwards CMAKE_* env vars) makes cmake-rs leave it
+# alone. Dash syntax works for MSVC cl, GCC and Clang alike.
+CMAKE_C_FLAGS_RELEASE = "-O2 -DNDEBUG"
+CMAKE_CXX_FLAGS_RELEASE = "-O2 -DNDEBUG"
+
+# Portable CPU baseline for the binaries we ship. ggml defaults to
+# GGML_NATIVE=ON (-march=native / CI runner's CPU), which could emit AVX-512 and
+# crash with "illegal instruction" on the user's laptop. OFF = SSE4.2, AVX, AVX2,
+# BMI2, FMA, F16C (every x86-64 CPU since ~2013), AVX-512 off.
+GGML_NATIVE = "OFF"
