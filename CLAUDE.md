@@ -166,6 +166,10 @@ Deep dives:
 - **The overlay must never take focus.** Create it non-activating (`WS_EX_NOACTIVATE |
   WS_EX_TOOLWINDOW`, click-through when idle). If it steals focus, the text goes into our own
   window.
+- **Static C runtime (`/MT`).** sherpa-onnx's prebuilt libs are `/MT`, so `.cargo/config.toml`
+  sets `+crt-static` for MSVC. Any new C/C++ dependency must build with `/MT` too (cmake-rs and
+  cc honour the flag; a CMake project that sets `CMAKE_MSVC_RUNTIME_LIBRARY` itself may not).
+  Otherwise linking fails with `LNK2038 RuntimeLibrary mismatch`.
 - **Defender/SmartScreen** dislike unsigned binaries that install keyboard hooks. Release builds
   are code-signed (see ROADMAP P6). Expect a SmartScreen warning on unsigned dev builds.
 

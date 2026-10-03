@@ -57,7 +57,9 @@ jobs:
         run: target/release/vt-bench manifest lock --check
 
       - name: Save models + dataset
-        if: always()
+        # Also when the lock check fails (it has downloaded everything by then),
+        # but not when the build failed and nothing was fetched.
+        if: always() && steps.lock.outcome != 'skipped'
         uses: actions/cache/save@v4
         with:
           path: |

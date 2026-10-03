@@ -1,0 +1,12 @@
+# Windows/MSVC: link the C runtime statically (/MT) everywhere.
+#
+# sherpa-onnx's prebuilt static libraries are compiled with /MT, so every other
+# native library (whisper.cpp via whisper-rs-sys, later llama.cpp) must use /MT
+# too, or the link fails with LNK2038 "RuntimeLibrary mismatch". cmake-rs and cc
+# pick this flag up automatically. Side benefit: vt-bench.exe and the app need
+# no Visual C++ redistributable on the user's machine.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
