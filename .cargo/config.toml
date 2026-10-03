@@ -10,3 +10,13 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
+
+# ...and make CMake-built C/C++ deps honour /MT in *every* configuration.
+# whisper-rs-sys builds the Release config but, in debug builds, tells cmake-rs
+# the build type is RelWithDebInfo, so cmake-rs's /MT lands in the wrong flags
+# variable and whisper.cpp falls back to CMake's default /MD. whisper-rs-sys
+# forwards CMAKE_* env vars as -D defines; opting into policy CMP0091 makes
+# CMAKE_MSVC_RUNTIME_LIBRARY authoritative. Non-MSVC compilers ignore both.
+[env]
+CMAKE_POLICY_DEFAULT_CMP0091 = "NEW"
+CMAKE_MSVC_RUNTIME_LIBRARY = "MultiThreaded"
