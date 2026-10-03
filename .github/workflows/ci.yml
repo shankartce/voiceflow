@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  linux:
+    name: Linux (fmt, clippy, test, network fence)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ALSA headers (cpal)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Clippy with engines / mic compiled out
+        run: |
+          cargo clippy -p vt-stt --no-default-features --all-targets -- -D warnings
+          cargo clippy -p vt-bench --no-default-features --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - name: Network fence (only vt-models may use HTTP)
+        run: scripts/network-fence.sh
+
+  windows:
+    name: Windows (test + vt-bench.exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+      - name: Build vt-bench (release)
+        shell: bash
+        run: VT_GIT_SHA="${GITHUB_SHA::10}" cargo build --release -p vt-bench
+      - name: Package
+        shell: pwsh
+        run: |
+          $dist = "dist/vt-bench-windows-x64"
+          New-Item -ItemType Directory -Force $dist | Out-Null
+          Copy-Item target/release/vt-bench.exe $dist/
+          Get-ChildItem target/release -Filter *.dll -ErrorAction SilentlyContinue | Copy-Item -Destination $dist/
+          Copy-Item bench/README.md $dist/README.md
+          Copy-Item LICENSE-MIT, LICENSE-APACHE $dist/
+          & "$dist/vt-bench.exe" --version
+          & "$dist/vt-bench.exe" models
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vt-bench-windows-x64
+          path: dist/vt-bench-windows-x64
+          if-no-files-found: error

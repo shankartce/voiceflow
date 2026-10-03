@@ -59,21 +59,30 @@ Selection rules:
 
 ```toml
 [[model]]
-id       = "parakeet-tdt-0.6b-v2-int8"
-kind     = "stt"            # stt | vad | llm
-engine   = "sherpa-transducer"
-license  = "CC-BY-4.0"
-attribution = "NVIDIA Parakeet TDT 0.6B v2 — https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2"
+id = "parakeet-tdt-0.6b-v2-int8"
+kind = "stt"                          # stt | vad | llm
+engine = "sherpa-nemo-transducer"     # which vt-stt implementation loads it
+license = "CC-BY-4.0"
+attribution = "NVIDIA Parakeet TDT 0.6B v2 (…), int8 ONNX export by k2-fsa/sherpa-onnx"
+approx_mb = 640
+source = { hf_repo = "csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8", revision = "<commit sha>" }
+
   [[model.file]]
-  name   = "encoder.int8.onnx"
-  url    = "https://…"        # upstream release asset (sherpa-onnx GitHub releases / Hugging Face)
-  sha256 = "…"                # filled in P1 from the downloaded file, reviewed in PR
-  size   = 0
-  # … decoder, joiner, tokens.txt
+  name = "encoder.int8.onnx"
+  role = "encoder"                    # how the engine uses the file
+  sha256 = "<64 hex>"
+  size = 652000000
+  # … decoder, joiner, tokens. A file may set `url = "https://…"` to override the derived URL.
 ```
 
-- URLs point at **upstream** hosts (sherpa-onnx GitHub releases, Hugging Face). We do not
-  re-host weights.
+- Download URL = `https://huggingface.co/<hf_repo>/resolve/<revision>/<name>`. Pinning a
+  **commit** revision makes it immutable.
+- **Locking:** an entry with an empty `revision`, `sha256` or `size` is *unlocked*, and
+  `fetch`/`import` refuse it. `vt-bench manifest lock` (dev/CI; run by `bench.yml`, which can
+  reach Hugging Face) resolves `main` → commit, downloads, hashes, and prints a regenerated
+  `models.toml` to commit. `--check` fails if the manifest differs from the downloaded bytes.
+- The LibriSpeech benchmark archive is pinned the same way in `bench/golden/libri.toml`.
+- URLs point at **upstream** hosts (Hugging Face). We do not re-host weights.
 - `vt-models` downloads over HTTPS:
   1. Resumable (`Range`) download to `<file>.part`.
   2. SHA-256 verified while streaming.
@@ -87,18 +96,25 @@ attribution = "NVIDIA Parakeet TDT 0.6B v2 — https://huggingface.co/nvidia/par
 
 ## 5. Benchmark method (`vt-bench run`)
 
-- **Golden set** (`bench/golden/manifest.toml`): `id`, `wav` path, `reference` text, and
-  `tags` (`noisy`, `names`, `fast`, `headset`, `laptop-mic`, `libri`). Personal WAVs are
-  `.gitignore`d; LibriSpeech clips are fetched by `vt-bench fetch-golden`.
-- **WER**: word-level Levenshtein after normalisation (lowercase, strip punctuation, expand
-  common contractions, numbers → words). Implemented in `vt-bench`, unit-tested against known
-  pairs. A punctuation-aware variant is reported separately, because P&C quality matters for
-  dictation.
-- **Latency**: model load time, then per clip `infer_ms` and RTF = infer / audio. Reports
-  p50/p95 over 3 runs after 1 warm-up.
-- **Memory**: peak working set (Windows `GetProcessMemoryInfo`) per engine, each in a fresh
-  process.
-- **Output**: a Markdown table written to `bench/results/<date>-<hostname>.md`, committed.
+- **Golden sets** (`<data dir>/golden/<set>/manifest.toml`, each clip: `id`, audio `file`,
+  `reference`, `tags`):
+  - `personal`: 40 prompts from `bench/golden/prompts.toml` (tags: slack, email, ai-chat,
+    names, numbers, question, long, fast, short), recorded with `vt-bench record`. Stays on
+    the user's machine and is never committed.
+  - `libri`: 20 LibriSpeech test-clean clips picked by a deterministic rule
+    (`bench/golden/libri.toml`), fetched by `vt-bench golden fetch-libri`.
+- **WER** (`crates/bench/src/wer.rs`): word-level Levenshtein after normalisation (lowercase,
+  strip punctuation, expand contractions, numbers/times/₹/% → words, a few spelling variants).
+  Table-tested. **P&C WER** keeps case and `. , ? !` as tokens, which matters for dictation.
+  It is reported for the personal set only (LibriSpeech references have no punctuation).
+- **Speed:** model load time, then per clip `infer_ms` and RTF = infer ÷ audio, over 3 timed
+  runs after 1 warm-up. "Est. wait after 10 s (p95)" = p95 RTF × 10 s.
+- **Memory:** peak working set (Windows `GetProcessMemoryInfo`, Linux `VmHWM`) of a fresh
+  `vt-bench run-one` process per engine.
+- **Output:** `<data dir>/results/<date>-<host>.md` (aggregates only, safe to share) + `.json`
+  (includes transcripts, kept private). The founder's report gets committed to `bench/results/`.
+- **Decision rule** (ROADMAP P1): lowest WER on `personal` (or `libri` if absent) among
+  engines with est. p95 wait ≤ 1.0 s and peak RAM ≤ 1 GB. The report states the pick.
 
 ## 6. First-run auto-pick (in the app)
 

@@ -1,0 +1,95 @@
+name: Bench
+
+# Runs every speech engine on the 20 LibriSpeech clips on a GitHub Windows runner.
+# This is a sanity baseline (does each engine load and transcribe correctly?).
+# The engine decision is made on the founder's laptop (see bench/README.md).
+
+on:
+  pull_request:
+    paths:
+      - "crates/**"
+      - "bench/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/bench.yml"
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "Timed runs per clip"
+        default: "3"
+
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  bench:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Data directory
+        shell: bash
+        run: echo "MURMUR_DATA_DIR=${RUNNER_TEMP//\\//}/murmur" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build vt-bench (release)
+        shell: bash
+        run: VT_GIT_SHA="${GITHUB_SHA::10}" cargo build --release -p vt-bench
+
+      - name: Restore models + dataset
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ runner.temp }}/murmur/models
+            ${{ runner.temp }}/murmur/cache
+          key: bench-data-${{ hashFiles('crates/models/models.toml', 'bench/golden/libri.toml') }}
+          restore-keys: bench-data-
+
+      # Downloads everything (or reuses the cache), hashes it, and fails if the
+      # manifest isn't pinned to exactly these bytes. The log then holds the
+      # regenerated models.toml / libri.toml block to commit.
+      - name: Manifest lock check
+        id: lock
+        run: target/release/vt-bench manifest lock --check
+
+      - name: Save models + dataset
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ runner.temp }}/murmur/models
+            ${{ runner.temp }}/murmur/cache
+          key: bench-data-${{ hashFiles('crates/models/models.toml', 'bench/golden/libri.toml') }}-${{ github.run_id }}
+
+      - name: Fetch + verify models
+        run: target/release/vt-bench fetch --all
+      - name: Golden set (LibriSpeech)
+        run: target/release/vt-bench golden fetch-libri
+      - name: Benchmark
+        shell: bash
+        run: |
+          target/release/vt-bench run --set libri --runs "${{ inputs.runs || '3' }}" \
+            --out bench-results --label github-windows-latest
+          cat bench-results/*.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Sanity check (every engine transcribes LibriSpeech correctly)
+        shell: pwsh
+        run: |
+          $report = Get-Content (Get-ChildItem bench-results -Filter *.json | Select-Object -First 1).FullName | ConvertFrom-Json
+          $bad = @()
+          foreach ($e in $report.summaries) {
+            $wer = ($e.sets | Where-Object { $_.set -eq 'libri' }).wer
+            Write-Host ("{0}: WER {1:N1}%" -f $e.engine, $wer)
+            if ($wer -gt 15) { $bad += $e.engine }
+          }
+          if ($report.summaries.Count -lt 4) { throw "expected 4 engines, got $($report.summaries.Count)" }
+          if ($bad.Count -gt 0) { throw "WER above 15% (broken integration?): $($bad -join ', ')" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-results
+          path: bench-results
+          if-no-files-found: ignore

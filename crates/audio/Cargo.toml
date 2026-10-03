@@ -1,0 +1,21 @@
+[package]
+name = "vt-audio"
+description = "Audio loading and conversion to 16 kHz mono f32 (live capture arrives in P2)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+hound.workspace = true
+claxon.workspace = true
+rubato.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

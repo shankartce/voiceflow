@@ -10,8 +10,10 @@ user's CPU. After a one-time model download the app **never touches the network*
 **Read `docs/progress.md` first** (what is built, what is next), then `docs/ARCHITECTURE.md`.
 The product spec is `docs/PRD.md`; the phase plan is `docs/ROADMAP.md`.
 
-> Status: **planning only (Phase P0).** No code exists yet. Commands below are the planned
-> interface. Update this file in the same commit that makes one of them real.
+> Status: **Phase P1 (engine spike).** The workspace exists with `vt-models`, `vt-audio`,
+> `vt-stt`, `vt-platform` (memory stats only) and the `vt-bench` CLI. There is no app yet.
+> Commands marked *(planned)* don't exist yet. Update this file in the same commit that makes
+> one of them real.
 
 ## Target environment (design for this, not for a dev workstation)
 
@@ -23,20 +25,33 @@ The product spec is `docs/PRD.md`; the phase plan is `docs/ROADMAP.md`.
   - Resident RAM **≤ 1 GB** with STT only and **≤ 2 GB** with the LLM loaded.
 - English only for v1.
 
-## Commands (planned)
+## Commands
 
 ```bash
-cargo build                                 # whole workspace
-cargo test --workspace                      # unit tests (pure crates run on Linux too)
-cargo clippy --workspace -- -D warnings
-cargo fmt --all
-cargo run -p vt-bench -- fetch parakeet-tdt-0.6b-v2-int8   # download a model for dev
-cargo run -p vt-bench -- transcribe --engine parakeet sample.wav
-cargo run -p vt-bench -- run bench/golden                  # WER + latency + RSS table
-npm --prefix ui install && npm --prefix ui run dev         # settings UI alone
-cargo tauri dev                                            # full app (Windows only)
-cargo tauri build                                          # NSIS/MSI installer
+cargo build                                     # whole workspace
+cargo test --workspace                          # unit tests (all crates run on Linux)
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all                                 # rustfmt.toml: max_width 120
+scripts/network-fence.sh                        # only vt-models may depend on an HTTP client
+cargo run -p vt-bench -- models                 # model status
+cargo run -p vt-bench -- fetch --all            # download + verify all speech models
+cargo run -p vt-bench -- transcribe -e parakeet clip.wav
+cargo run -p vt-bench -- golden fetch-libri     # 20 LibriSpeech clips
+cargo run -p vt-bench -- record                 # record the personal golden set (needs a mic)
+cargo run -p vt-bench --release -- run          # WER + RTF + peak RAM report, per engine
+cargo run -p vt-bench -- manifest lock --check  # dev/CI: re-hash and print pinned values
+npm --prefix ui install && npm --prefix ui run dev   # (planned) settings UI alone
+cargo tauri dev                                      # (planned) full app (Windows only)
+cargo tauri build                                    # (planned) NSIS/MSI installer
 ```
+
+Engine aliases for `-e`/`--engines`: `parakeet`, `moonshine`, `whisper-base`, `whisper-small`.
+The data directory defaults to `%LOCALAPPDATA%\Murmur` (Linux: `~/.local/share/Murmur`).
+Override it with `--data-dir` or `MURMUR_DATA_DIR`.
+
+CI: `.github/workflows/ci.yml` (Linux lint/test/fence + Windows test, which uploads
+`vt-bench-windows-x64` as an artifact) and `bench.yml` (Windows runner: lock check, then all 4
+engines on LibriSpeech, failing if any engine's WER > 15%).
 
 Windows dev prerequisites: Rust stable (MSVC toolchain), Visual Studio Build Tools (C++),
 CMake, LLVM/clang (bindgen for whisper.cpp / llama.cpp), Node 20+, WebView2 (preinstalled on
@@ -48,6 +63,17 @@ the real implementation and a `noop`/`mock` implementation otherwise. Compile-ch
 from Linux with `cargo xwin check --target x86_64-pc-windows-msvc` when `cargo-xwin` is
 available. Otherwise rely on the `windows-latest` CI job. **Never claim a Windows-only behaviour
 works without it having run on Windows.**
+
+**Cloud sessions can't reach Hugging Face, openslr.org or GitHub release assets** (egress
+policy), so models can't be downloaded and sherpa-onnx's static libs can't be fetched there.
+Link sherpa-onnx dynamically instead. The npm package `sherpa-onnx-linux-x64@<same version>`
+ships the upstream `libsherpa-onnx-c-api.so` + `libonnxruntime.so`:
+```bash
+mkdir -p /tmp/sherpa && curl -sSL https://registry.npmjs.org/sherpa-onnx-linux-x64/-/sherpa-onnx-linux-x64-1.13.8.tgz | tar xz -C /tmp/sherpa
+export SHERPA_ONNX_LIB_DIR=/tmp/sherpa/package LD_LIBRARY_PATH=/tmp/sherpa/package
+cargo test --workspace --features vt-bench/sherpa-shared   # also needs: apt-get install libasound2-dev
+```
+Real inference (models) runs in the `bench.yml` workflow and on the founder's laptop.
 
 ## Architecture (the big picture)
 
@@ -147,7 +173,8 @@ Deep dives:
 
 "Murmur" appears in: the docs, `app/Cargo.toml` (package `murmur`), `app/tauri.conf.json`
 (`productName`, `identifier`), installer config, and the `%APPDATA%\Murmur` / `%LOCALAPPDATA%\Murmur`
-directory name (one constant: `vt_storage::APP_DIR_NAME`). Crate names are neutral and stay put.
+directory name (one constant: `vt_models::APP_DIR_NAME` for now, moving to `vt_storage` in P2).
+Crate names are neutral and stay put.
 
 ## Licensing
 
