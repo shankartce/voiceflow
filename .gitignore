@@ -21,3 +21,8 @@ ggml-*.bin
 Thumbs.db
 .vscode/
 .idea/
+
+# vt-bench outputs (CI writes here; personal reports live in %LOCALAPPDATA%\Murmur\results)
+/bench-results/
+/dist/
+*.part

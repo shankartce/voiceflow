@@ -1,0 +1,111 @@
+name: Bench
+
+# Runs every speech engine on the 20 LibriSpeech clips on a GitHub Windows runner.
+# This is a sanity baseline (does each engine load and transcribe correctly?).
+# The engine decision is made on the founder's laptop (see bench/README.md).
+
+on:
+  pull_request:
+    paths:
+      - "crates/**"
+      - "bench/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/bench.yml"
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "Timed runs per clip"
+        default: "3"
+
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  bench:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Data directory
+        shell: bash
+        run: echo "MURMUR_DATA_DIR=${RUNNER_TEMP//\\//}/murmur" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Cargo doesn't rebuild -sys crates when .cargo/config.toml [env] changes
+          # (native build flags live there), so key the cache on it.
+          key: cargo-config-${{ hashFiles('.cargo/config.toml') }}
+      - name: Build vt-bench (release)
+        shell: bash
+        run: VT_GIT_SHA="${GITHUB_SHA::10}" cargo build --release -p vt-bench
+
+      - name: Restore models + dataset
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ runner.temp }}/murmur/models
+            ${{ runner.temp }}/murmur/cache
+          key: bench-data-${{ hashFiles('crates/models/models.toml', 'bench/golden/libri.toml') }}
+          restore-keys: bench-data-
+
+      # Downloads everything (or reuses the cache), hashes it, and fails if the
+      # manifest isn't pinned to exactly these bytes. The log then holds the
+      # regenerated models.toml / libri.toml block to commit.
+      - name: Manifest lock check
+        id: lock
+        run: target/release/vt-bench manifest lock --check
+
+      - name: Save models + dataset
+        # Also when the lock check fails (it has downloaded everything by then),
+        # but not when the build failed and nothing was fetched.
+        if: always() && steps.lock.outcome != 'skipped'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ runner.temp }}/murmur/models
+            ${{ runner.temp }}/murmur/cache
+          key: bench-data-${{ hashFiles('crates/models/models.toml', 'bench/golden/libri.toml') }}-${{ github.run_id }}
+
+      - name: Fetch + verify models
+        run: target/release/vt-bench fetch --all
+      - name: Golden set (LibriSpeech)
+        run: target/release/vt-bench golden fetch-libri
+      - name: Benchmark
+        shell: bash
+        run: |
+          target/release/vt-bench run --set libri --runs "${{ inputs.runs || '3' }}" --threads 4 \
+            --out bench-results --label github-windows-latest
+          cat bench-results/*.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Sanity check (every engine transcribes LibriSpeech correctly; native build is optimised)
+        shell: pwsh
+        run: |
+          $report = Get-Content (Get-ChildItem bench-results -Filter *.json | Select-Object -First 1).FullName | ConvertFrom-Json
+          $bad = @()
+          $slow = @()
+          $canary = $null
+          foreach ($e in $report.summaries) {
+            $libri = $e.sets | Where-Object { $_.set -eq 'libri' }
+            Write-Host ("{0}: WER {1:N1}%, RTF p95 {2:N3}" -f $e.engine, $libri.wer, $libri.rtf_p95)
+            if ($libri.wer -gt 15) { $bad += $e.engine }
+            if ($libri.rtf_p95 -gt 3.0) { $slow += $e.engine }
+            if ($e.engine -eq 'whisper-base.en-q5_1') { $canary = $libri.rtf_p95 }
+          }
+          if ($report.summaries.Count -lt 4) { throw "expected 4 engines, got $($report.summaries.Count)" }
+          if ($bad.Count -gt 0) { throw "WER above 15% (broken integration?): $($bad -join ', ')" }
+          if ($slow.Count -gt 0) { throw "RTF p95 above 3.0 (pathologically slow): $($slow -join ', ')" }
+          # Build canary: whisper-base shares the native (CMake-built) whisper.cpp with
+          # whisper-small. Unoptimised it ran at RTF ~3 on this runner, optimised ~0.5.
+          # whisper-small itself may legitimately exceed 1.0 on 2 physical cores, because
+          # whisper.cpp always encodes a fixed 30 s window.
+          if ($null -eq $canary -or $canary -gt 1.0) { throw "whisper-base RTF p95 $canary > 1.0: is whisper.cpp built unoptimised? (see CLAUDE.md, Windows gotchas)" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-results
+          path: bench-results
+          if-no-files-found: ignore

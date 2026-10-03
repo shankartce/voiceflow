@@ -1,0 +1,208 @@
+# Prompts for `vt-bench record`: the personal golden set.
+#
+# Read each one naturally, the way you'd dictate it. The text is the reference
+# transcript, written the way you'd want it to appear, so punctuation and
+# casing count towards the P&C score.
+# Tags let results be sliced: slack, email, ai-chat, names, numbers, question,
+# long, fast, short.
+# Don't renumber ids: recordings are matched to prompts by id.
+
+[[prompt]]
+id = "p01"
+tags = ["slack", "short"]
+text = "Sounds good, I'll take a look this afternoon."
+
+[[prompt]]
+id = "p02"
+tags = ["slack", "question"]
+text = "Did anyone get a chance to review the pull request from yesterday?"
+
+[[prompt]]
+id = "p03"
+tags = ["slack"]
+text = "Quick update: the build is green again, so we can go ahead with the release."
+
+[[prompt]]
+id = "p04"
+tags = ["slack", "names"]
+text = "Thanks Priya, can you loop in Arjun and Kavya before the standup?"
+
+[[prompt]]
+id = "p05"
+tags = ["slack", "short"]
+text = "Running ten minutes late, start without me."
+
+[[prompt]]
+id = "p06"
+tags = ["slack", "names"]
+text = "The GetBanaya storefront is live, please share it with your sellers."
+
+[[prompt]]
+id = "p07"
+tags = ["slack", "question"]
+text = "Should we move the demo to Thursday or keep it on Friday?"
+
+[[prompt]]
+id = "p08"
+tags = ["slack", "fast"]
+text = "I think the bug is in the checkout flow because the coupon is applied twice when you refresh the page."
+
+[[prompt]]
+id = "p09"
+tags = ["email"]
+text = "Hi Rahul, thank you for the detailed proposal. I have gone through it and I have a few questions."
+
+[[prompt]]
+id = "p10"
+tags = ["email", "numbers"]
+text = "Could we schedule a call on Monday at 11 AM to discuss the pricing?"
+
+[[prompt]]
+id = "p11"
+tags = ["email", "long"]
+text = "As discussed in our meeting, we will share the revised timeline by the end of this week. The design phase will take two weeks, followed by three weeks of development and one week of testing."
+
+[[prompt]]
+id = "p12"
+tags = ["email", "names"]
+text = "Please find attached the invoice for September. Let me know if you need anything else from our side."
+
+[[prompt]]
+id = "p13"
+tags = ["email"]
+text = "I wanted to follow up on my previous email regarding the partnership."
+
+[[prompt]]
+id = "p14"
+tags = ["email", "numbers"]
+text = "The total comes to ₹4,999, including GST and shipping."
+
+[[prompt]]
+id = "p15"
+tags = ["email", "names"]
+text = "Best regards, Shankar."
+
+[[prompt]]
+id = "p16"
+tags = ["email", "long"]
+text = "We are very excited to welcome you to the program. Over the next few days you will receive an onboarding kit, access to the seller dashboard, and an invitation to our community group."
+
+[[prompt]]
+id = "p17"
+tags = ["ai-chat"]
+text = "Write a Python function that reads a CSV file and returns the average of the price column."
+
+[[prompt]]
+id = "p18"
+tags = ["ai-chat", "question"]
+text = "What is the difference between a mutex and a semaphore? Explain with an example."
+
+[[prompt]]
+id = "p19"
+tags = ["ai-chat", "long"]
+text = "Summarize this article in three bullet points and suggest a catchy title for a LinkedIn post about it."
+
+[[prompt]]
+id = "p20"
+tags = ["ai-chat", "names"]
+text = "Refactor this React component to use hooks instead of a class, and keep the TypeScript types."
+
+[[prompt]]
+id = "p21"
+tags = ["ai-chat"]
+text = "Draft a polite reply declining the meeting, but offer two alternative slots next week."
+
+[[prompt]]
+id = "p22"
+tags = ["ai-chat", "names"]
+text = "How do I configure Razorpay webhooks in a FastAPI backend?"
+
+[[prompt]]
+id = "p23"
+tags = ["names"]
+text = "My name is Shankar and I live in Chennai."
+
+[[prompt]]
+id = "p24"
+tags = ["names"]
+text = "We are opening new warehouses in Bengaluru, Hyderabad, and Coimbatore."
+
+[[prompt]]
+id = "p25"
+tags = ["names"]
+text = "Ask Venkatesh to send the KYC documents to Lakshmi by tomorrow."
+
+[[prompt]]
+id = "p26"
+tags = ["names"]
+text = "The order is shipped through Delhivery and should reach Pune on Saturday."
+
+[[prompt]]
+id = "p27"
+tags = ["names"]
+text = "Supabase, Vercel, and Tauri are part of our stack."
+
+[[prompt]]
+id = "p28"
+tags = ["numbers"]
+text = "The meeting is at 5:30 PM on the 21st of October."
+
+[[prompt]]
+id = "p29"
+tags = ["numbers"]
+text = "Our conversion rate went up by 12% this month."
+
+[[prompt]]
+id = "p30"
+tags = ["numbers"]
+text = "Call me back on extension 204 after 3 PM."
+
+[[prompt]]
+id = "p31"
+tags = ["numbers"]
+text = "We sold 1,250 units in the first quarter."
+
+[[prompt]]
+id = "p32"
+tags = ["numbers"]
+text = "The minimum order value is ₹499."
+
+[[prompt]]
+id = "p33"
+tags = ["question"]
+text = "Can you send me the link again? It doesn't open on my phone."
+
+[[prompt]]
+id = "p34"
+tags = ["question", "short"]
+text = "Are we still on for lunch?"
+
+[[prompt]]
+id = "p35"
+tags = ["fast"]
+text = "Let me know what you think and we can finalize it by tonight so the team can start first thing tomorrow morning."
+
+[[prompt]]
+id = "p36"
+tags = ["fast"]
+text = "Honestly the new design looks much cleaner and the checkout feels a lot faster than before."
+
+[[prompt]]
+id = "p37"
+tags = ["long"]
+text = "Yesterday I spent most of the day debugging an issue with the payment webhook. It turned out the signature check was failing because the raw request body was being parsed before verification. Once I fixed that, everything started working."
+
+[[prompt]]
+id = "p38"
+tags = ["long"]
+text = "For the next sprint, I would like us to focus on three things: improving the onboarding flow, reducing page load time on mobile, and fixing the top ten bugs reported by our sellers."
+
+[[prompt]]
+id = "p39"
+tags = ["short"]
+text = "Okay, done."
+
+[[prompt]]
+id = "p40"
+tags = ["short", "slack"]
+text = "Great work, everyone!"

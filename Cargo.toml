@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/shankartce/voiceflow"
+publish = false
+
+[workspace.dependencies]
+# Internal crates
+vt-models = { path = "crates/models", default-features = false }
+vt-audio = { path = "crates/audio" }
+vt-stt = { path = "crates/stt", default-features = false }
+vt-platform = { path = "crates/platform" }
+
+# Errors / serialisation
+thiserror = "2"
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "1"
+
+# Models / hashing / paths
+sha2 = "0.11"
+hex = "0.4"
+directories = "6"
+# HTTP: ONLY vt-models may depend on this (see scripts/network-fence.sh).
+ureq = { version = "3", default-features = false, features = ["rustls", "platform-verifier"] }
+
+# Audio
+hound = "3.5"
+claxon = "0.4"
+rubato = "5"
+cpal = "0.18"
+
+# Engines
+sherpa-onnx = { version = "=1.13.8", default-features = false }
+whisper-rs = "0.16"
+
+# Bench / CLI
+clap = { version = "4", features = ["derive", "env"] }
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+flate2 = "1"
+tar = "0.4"
+
+# Platform
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_ProcessStatus", "Win32_System_Threading"] }
+
+# Dev
+tempfile = "3"
+tiny_http = "0.12"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+dbg_macro = "deny"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 4

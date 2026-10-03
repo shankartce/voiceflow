@@ -1,0 +1,110 @@
+# Model manifest — compiled into the binary (vt-models). See docs/MODELS.md.
+#
+# Every downloadable file is pinned by `sha256` + `size`, and every Hugging Face
+# source by an immutable commit `revision`. Entries with an empty revision or
+# hash are "unlocked": `fetch` refuses them, and `vt-bench manifest lock` (run in
+# CI, which can reach Hugging Face) prints the values to paste here.
+#
+# We never re-host weights: URLs point at the upstream publishers.
+
+[[model]]
+id = "parakeet-tdt-0.6b-v2-int8"
+kind = "stt"
+engine = "sherpa-nemo-transducer"
+license = "CC-BY-4.0"
+attribution = "NVIDIA Parakeet TDT 0.6B v2 (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2), int8 ONNX export by k2-fsa/sherpa-onnx"
+approx_mb = 661
+source = { hf_repo = "csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8", revision = "1ab9323565ddb038682214b292f588070a538ce2" }
+
+  [[model.file]]
+  name = "encoder.int8.onnx"
+  role = "encoder"
+  sha256 = "a32b12d17bbbc309d0686fbbcc2987b5e9b8333a7da83fa6b089f0a2acd651ab"
+  size = 652184296
+
+  [[model.file]]
+  name = "decoder.int8.onnx"
+  role = "decoder"
+  sha256 = "b6bb64963457237b900e496ee9994b59294526439fbcc1fecf705b31a15c6b4e"
+  size = 7257753
+
+  [[model.file]]
+  name = "joiner.int8.onnx"
+  role = "joiner"
+  sha256 = "7946164367946e7f9f29a122407c3252b680dbae9a51343eb2488d057c3c43d2"
+  size = 1739080
+
+  [[model.file]]
+  name = "tokens.txt"
+  role = "tokens"
+  sha256 = "ec182b70dd42113aff6c5372c75cac58c952443eb22322f57bbd7f53977d497d"
+  size = 9384
+
+[[model]]
+id = "moonshine-base-en-int8"
+kind = "stt"
+engine = "sherpa-moonshine"
+license = "MIT"
+attribution = "Useful Sensors Moonshine base (https://github.com/usefulsensors/moonshine), int8 ONNX export by k2-fsa/sherpa-onnx"
+approx_mb = 287
+source = { hf_repo = "csukuangfj/sherpa-onnx-moonshine-base-en-int8", revision = "052b0798ad1bf046a140fdd4efcd9426530fa3f5" }
+
+  [[model.file]]
+  name = "preprocess.onnx"
+  role = "preprocessor"
+  sha256 = "ffa630d395c5ccf76f5d4954be5b882df76aaf6491519ec01fd82ea7a3819fb2"
+  size = 14077290
+
+  [[model.file]]
+  name = "encode.int8.onnx"
+  role = "encoder"
+  sha256 = "7e38770f776f2e5583a53b052936005df2ba5c833d7e09c2a5fd796b94bf73e2"
+  size = 50311494
+
+  [[model.file]]
+  name = "uncached_decode.int8.onnx"
+  role = "uncached_decoder"
+  sha256 = "c01f4b35093bcac20d352d23a75a539e772964579f9d024a90e5e6f09cae9987"
+  size = 122120451
+
+  [[model.file]]
+  name = "cached_decode.int8.onnx"
+  role = "cached_decoder"
+  sha256 = "2db74e51cedf64a8b1be3c8192e0bb5e4923af0e90bd9e87f8e8771873f8ea03"
+  size = 99983837
+
+  [[model.file]]
+  name = "tokens.txt"
+  role = "tokens"
+  sha256 = "1165c2aeb9f72f457a83be2d459a09054f27490acd9b41bd43794dfd25e296ea"
+  size = 436688
+
+[[model]]
+id = "whisper-base.en-q5_1"
+kind = "stt"
+engine = "whisper-cpp"
+license = "MIT"
+attribution = "OpenAI Whisper base.en (https://github.com/openai/whisper), GGML conversion by ggerganov/whisper.cpp"
+approx_mb = 60
+source = { hf_repo = "ggerganov/whisper.cpp", revision = "5359861c739e955e79d9a303bcbc70fb988958b1" }
+
+  [[model.file]]
+  name = "ggml-base.en-q5_1.bin"
+  role = "model"
+  sha256 = "4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f"
+  size = 59721011
+
+[[model]]
+id = "whisper-small.en-q5_1"
+kind = "stt"
+engine = "whisper-cpp"
+license = "MIT"
+attribution = "OpenAI Whisper small.en (https://github.com/openai/whisper), GGML conversion by ggerganov/whisper.cpp"
+approx_mb = 190
+source = { hf_repo = "ggerganov/whisper.cpp", revision = "5359861c739e955e79d9a303bcbc70fb988958b1" }
+
+  [[model.file]]
+  name = "ggml-small.en-q5_1.bin"
+  role = "model"
+  sha256 = "bfdff4894dcb76bbf647d56263ea2a96645423f1669176f4844a1bf8e478ad30"
+  size = 190098681

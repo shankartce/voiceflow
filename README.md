@@ -5,9 +5,10 @@ cursor is. Runs entirely on your own CPU, with no cloud, no account and no API k
 
 An open-source, local-first alternative to [Wispr Flow](https://wisprflow.ai).
 
-> **Status: planning.** This repository currently contains the design documents only.
-> See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the build plan and
-> [`docs/progress.md`](docs/progress.md) for what is done.
+> **Status: Phase 1, engine benchmark.** There is no dictation app yet. The repo has the
+> design docs and `vt-bench`, a CLI that measures local speech engines on your machine
+> ([`bench/README.md`](bench/README.md)). See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the
+> plan and [`docs/progress.md`](docs/progress.md) for what is done.
 
 ## What it will do
 
@@ -73,7 +74,12 @@ Built with Rust + Tauri v2. Speech engines: [sherpa-onnx](https://github.com/k2-
 
 ## Building from source
 
-Not yet buildable. The planned commands are listed in [`CLAUDE.md`](CLAUDE.md#commands-planned).
+```bash
+cargo test --workspace
+cargo run -p vt-bench --release -- --help
+```
+Windows needs Visual Studio Build Tools (C++), CMake and LLVM. See [`CLAUDE.md`](CLAUDE.md#commands).
+To just run the benchmark, use the prebuilt `vt-bench.exe` ([`bench/README.md`](bench/README.md)).
 
 ## License
 

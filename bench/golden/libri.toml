@@ -1,0 +1,20 @@
+# Public sanity baseline for `vt-bench`: 20 utterances from LibriSpeech test-clean.
+#
+# `vt-bench golden fetch-libri` downloads the archive once (verified against
+# `sha256`), then picks clips with the rule below. The selection is fully
+# deterministic, so every machine benchmarks the same clips.
+# An empty `sha256` means "not yet pinned": `vt-bench manifest lock` prints it.
+
+[dataset]
+name = "LibriSpeech test-clean"
+license = "CC-BY-4.0"
+url = "https://www.openslr.org/resources/12/test-clean.tar.gz"
+sha256 = "39fde525e59672dc6d1551919b1478f724438a95aa55f874b576be21967e6c23"
+size = 346663984
+
+# Speakers in numeric order; for each, the first utterance (in id order) whose
+# duration is within [min_seconds, max_seconds]; stop after `count` speakers.
+[selection]
+count = 20
+min_seconds = 5.0
+max_seconds = 15.0
