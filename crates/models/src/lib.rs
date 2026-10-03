@@ -466,6 +466,14 @@ source = { hf_repo = "o/r" }
     }
 
     #[test]
+    fn shipped_manifest_is_fully_pinned() {
+        for e in &manifest().unwrap().models {
+            assert!(e.is_locked(), "{} has an empty revision/sha256/size; run `vt-bench manifest lock`", e.id);
+            assert_eq!(e.source.revision.len(), 40, "{}: revision must be a full commit SHA", e.id);
+        }
+    }
+
+    #[test]
     fn unlocked_entry_is_refused() {
         let m = manifest().unwrap();
         let tmp = tempfile::tempdir().unwrap();

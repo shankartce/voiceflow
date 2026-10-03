@@ -10,7 +10,7 @@ _Last updated: 2026-10-03_
 
 **Phase P1 (engine spike & benchmark): code built, awaiting real numbers.** `vt-bench` and its
 crates are in place and unit-tested on Linux. Remaining:
-1. Pin model hashes from the first `bench.yml` CI run.
+1. ~~Pin model hashes~~ (done).
 2. Get a green Windows CI run, which produces `vt-bench-windows-x64`.
 3. The founder runs it on their laptop (`bench/README.md`).
 4. Log the engine decision below.
@@ -44,7 +44,7 @@ crates are in place and unit-tested on Linux. Remaining:
 - [x] Cargo workspace + `[workspace.lints]` (unwrap/expect denied) + `rustfmt.toml`
 - [x] CI: `ci.yml` (Linux fmt/clippy/test + network fence; Windows test + `vt-bench.exe` artifact), `bench.yml`
 - [x] `vt-models`: compiled-in manifest, resumable HTTPS download, streaming SHA-256, atomic rename, `.verified` marker, offline import, `manifest lock`
-- [ ] Pin real revisions + SHA-256 (from the first `bench.yml` run's lock output) for Parakeet int8, Moonshine base, whisper base.en/small.en q5_1, and the LibriSpeech archive *(Silero VAD moves to P2, where it's first used)*
+- [x] Pin real revisions + SHA-256 (from the first `bench.yml` run's lock output, 2026-10-03) for Parakeet int8, Moonshine base, whisper base.en/small.en q5_1, and the LibriSpeech archive *(Silero VAD moves to P2, where it's first used)*
 - [x] `vt-stt`: `SpeechEngine` trait + registry; Parakeet + Moonshine (sherpa-onnx 1.13.8), Whisper (whisper-rs 0.16)
 - [x] `vt-audio`: WAV/FLAC load, downmix, FFT resample to 16 kHz (rubato), 16 kHz WAV writer
 - [x] `vt-platform`: peak RSS (Windows `GetProcessMemoryInfo` / Linux `VmHWM`)

@@ -9,8 +9,8 @@
 name = "LibriSpeech test-clean"
 license = "CC-BY-4.0"
 url = "https://www.openslr.org/resources/12/test-clean.tar.gz"
-sha256 = ""
-size = 0
+sha256 = "39fde525e59672dc6d1551919b1478f724438a95aa55f874b576be21967e6c23"
+size = 346663984
 
 # Speakers in numeric order; for each, the first utterance (in id order) whose
 # duration is within [min_seconds, max_seconds]; stop after `count` speakers.

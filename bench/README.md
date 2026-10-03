@@ -11,7 +11,7 @@ transcripts stay in `%LOCALAPPDATA%\Murmur`.
 ## What you need
 
 - Windows 10/11, x64. No Rust, Visual Studio or Python needed.
-- ~2 GB free disk (1.1 GB models + 350 MB LibriSpeech + your clips).
+- ~2 GB free disk (1.2 GB models + 350 MB LibriSpeech + your clips).
 - The microphone you'll actually dictate with, and a quiet-ish room.
 - ~45 minutes in total, most of it unattended.
 
@@ -29,7 +29,7 @@ transcripts stay in `%LOCALAPPDATA%\Murmur`.
    ```
    If SmartScreen still appears: **More info → Run anyway**.
 
-## 2. Download the models (one time, ~1.1 GB)
+## 2. Download the models (one time, ~1.2 GB)
 
 ```powershell
 .\vt-bench.exe fetch --all
